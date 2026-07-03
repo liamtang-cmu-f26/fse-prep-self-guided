@@ -223,3 +223,85 @@ The slash (`/`) is optional in HTML5 but is commonly written because it makes se
   * `submit`
 
 Different `type` values change how the browser displays the input and how it validates user input.
+
+---
+
+## CSS Basics
+
+### Concepts
+CSS controls appearances.
+```css
+color: red;
+font-size: 20px;
+margin: 10px;
+padding: 20px;
+border: 1px solid black;
+```
+
+---
+
+### Example
+```css
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f3f4f6;
+}
+
+#login-container {
+  width: 360px;
+  margin: 100px auto;
+  padding: 32px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+}
+
+h1 {
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+```
+One more line to be added in corresponding HTML file:
+```html
+<link rel="stylesheet" href="style.css" />
+```
+--- 
+
+### Notes
+* The part before {} is called a **selector**.
+* The part inside {} is called the **rules**.
+* for `#login-container`, the # means find the element whose **id** is `login-container`.
+* common values for `text-align`:
+    * left
+    * right
+    * center
+    * jusify (stretches spaces so both sides line up)
+* **Padding** is the space INSIDE the border, meaning increasing padding makes the border larger.
+    * `padding:32px;`
+* **Margin** is the space OUTSIDE the border, meaning increasing margin makes the whole box move away from other objects.
+    * `margin: 20px`, meaning 4 sides are all 20px away
+    * `margin:100px auto;`, meaning top and bottom are 100px away, where `auto` split equally left and right
+    * `margin: 10px 20px 30px 40px;`, think of the order clockwise(top --> right --> bottom --> left)
+* `rel` stands for **relationship**. Common values include:
+    * `<link rel="stylesheet" href="style.css">`
+    * `<link rel="icon" href="logo.ico">`, meaning this is the small icon shown in the browser tab.
+    * `<link rel="preconnect" href="https://fonts.googleapis.com">`, meaning "Browser, prepare a connection early because we'll use this website soon"
+* `href` stands for **Hypertext Reference**, think of it as where the file i want is.
+* `<link />` is a self-closing element(**void** element).
