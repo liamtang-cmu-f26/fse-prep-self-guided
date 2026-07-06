@@ -36,3 +36,19 @@ sendButton.addEventListener("click", function () {
 
   messageInput.value = "";
 });
+
+const loadApiButton = document.getElementById("load-api-button");
+const apiResult = document.getElementById("api-result");
+
+loadApiButton.addEventListener("click", async function () {
+  apiResult.textContent = "Loading...";
+
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts/1");
+    const data = await response.json();
+
+    apiResult.textContent = JSON.stringify(data, null, 2);
+  } catch (error) {
+    apiResult.textContent = "Failed to load API data.";
+  }
+});

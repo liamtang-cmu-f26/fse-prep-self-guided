@@ -546,3 +546,123 @@ sendButton.addEventListener("click", function () {
 ---
 ### Example notes
 HTML provides the initial skeleton. The browser builds a DOM from that HTML. JavaScript modifies the DOM (which exists in memory), and the browser updates the screen to reflect those changes. Unless JavaScript saves the data somewhere persistent (such as a database or browser storage), those DOM changes are lost when the page is reloaded.
+
+---
+
+## Async JavaScript
+
+### Concepts
+Modern web apps often get data from APIs.
+
+* An API response often looks like JSON:
+```json
+{
+  "id": 1,
+  "title": "Hello"
+}
+```
+* `fetch` sends a request:
+```js
+fetch("https://example.com/data")
+```
+* `async`/`await` make async code easier to read:
+```js
+async function loadData() {
+  const response = await fetch(url);
+  const data = await response.json();
+}
+```
+
+---
+
+### Notes
+* API = Application Programming Interface. The API is the agreed-upon way your JavaScript asks the server for information.
+* While waiting for asynchronous functions, other things can be done.
+* by `const response = await fetch(url)`, the server replies things which contains the entire HTTP response, like:
+    ```plaintext
+    HTTP Response
+
+    Status: 200 OK
+
+    Headers:
+    ...
+
+    Body:
+    {
+        "id":1,
+        "title":"Hello"
+    }
+    ```
+* so `const data = await response.json();` read the response body --> interpret it as JSON --> convert it into a JavaScript object.
+    * suppose the server sent
+        ```json
+        {
+        "id": 1,
+        "title": "Hello"
+        }
+        ```
+    * after `await response.json()`, JavaScript gets
+        ```js
+        {
+            id: 1,
+            title: "Hello"
+        }
+        ```
+    * Notice the text JSON file is now converted into a JS object
+    * therefore now `data.title` gives `"Hello"`
+* use `await` only for operations that are themselves asynchronous. so no `await` before `console.log(title);`.
+
+---
+
+### Example
+```html
+<div id="api-container">
+  <h2>API Result</h2>
+  <button id="load-api-button" type="button">Load API Data</button>
+  <pre id="api-result"></pre>
+</div>
+```
+
+```js
+const loadApiButton = document.getElementById("load-api-button");
+const apiResult = document.getElementById("api-result");
+
+loadApiButton.addEventListener("click", async function () {
+  apiResult.textContent = "Loading...";
+
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts/1");
+    const data = await response.json();
+
+    apiResult.textContent = JSON.stringify(data, null, 2);
+  } catch (error) {
+    apiResult.textContent = "Failed to load API data.";
+  }
+});
+```
+
+---
+
+### Example notes
+* `<pre>` stands for preformatted text, it preserves formatting by showing exactly what is typed.
+* `JSON.stringify(data, null, 2);` converts object `data` to a text, meeting the need by ` apiResult.textContent`.
+* `JSON.stringify(value, replacer, space)`
+    * `JSON.stringify(data)` produce everything in one line:
+        ```plaintext
+        {"id":1,"title":"Hello","body":"Some text"}
+        ```
+    * `JSON.stringify(data, null, 2)` produce indentation of 2 spaces:
+        ```plaintext
+        {
+          "id": 1,
+          "title": "Hello",
+          "body": "Some text"
+        }
+        ```
+* usually in a real application, we don't do `JSON.stringify(data)`, here is just to see what is retrieved by API. Instead we do following to retrieve what we need:
+    ```js
+    const data = await response.json();
+
+    titleElement.textContent = data.title;
+    authorElement.textContent = data.author;
+    ```
