@@ -355,3 +355,80 @@ body {
 * `align-items: center;` means center the item **vertically**.
 * when flexbox is applied, there is no need to manually set margin for `#login-container`. Therefore `width: 360px;` and `max-width: 90%;` is applied together, meaning that try to be 360px wide, but never exceed 90% of the screen width.
 * `flex-direction: row;` is implicitly written in `body`. `flex-direction` determines the main axis, the direction in which flex items are laid out. In this case there is only one direct child, so no need to specify row or column.
+
+---
+
+## JavaScript Basics
+
+### Concepts
+JavaScript adds behavior.
+```js
+let name = "Liam";
+const age = 22;
+
+function greet(name) {
+  return "Hello " + name;
+}
+
+const users = ["Alice", "Bob"];
+
+const user = {
+  username: "liam",
+  password: "123456"
+};
+```
+
+---
+### Notes
+* standard way to declare a variable: `let name = "Liam";`
+* `const` prevents reassignments of the variable, not modification of the object or array it refers to.
+* JavaScript arrays can store mixed types:
+    * ` const arr = [123, "hello", true, null, { name: "Liam" }, [1, 2, 3]];`
+    * locate array elements by index: `arr[0]`
+
+---
+
+### Example
+```js
+const form = document.getElementById("login-form");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+
+form.addEventListener("submit", function (event) {
+  event.preventDefault();
+
+  const username = usernameInput.value;
+  const password = passwordInput.value;
+
+  if (username === "" || password === "") {
+    alert("Username and password cannot be empty.");
+    return;
+  }
+
+  alert("Login form submitted successfully.");
+});
+```
+Add following line into html file right before `</body>`:
+```html
+<script src="script.js"></script>
+```
+
+---
+### Example notes
+* some common events:
+    * `button.addEventListener("click", function () { });`
+    * `input.addEventListener("keydown", function () { });`
+    * `input.addEventListener("input", function () { });`
+    * `element.addEventListener("mousemove", function () { });`
+* the first paramenter tells JavaScript which event should I listen for: `addEventListener(eventName, function)`
+* Every HTML element has default behavior.
+    * A link `<a href="google.com">` open google
+    * A checkbox check or uncheck itself
+    * A form send the data to the server --> reload the page
+* Current login page isn;t connected to a server yet. If the browser performs the default action, the page immediately reloads. The validation code wouldn't have a chance to run. So `event.preventDefault()` let JavaScript decide what should happen.
+    * without it: click log in --> browser submits form --> reload page
+    * with it: click log in --> stop browser --> run JavaScript --> check username --> check password --> show alert
+* `===` compares both the value and the type, `==` tries to convert values before comparing
+    * `5 === "5"` results `false`, `5 == "5"` results `true`.
+    * `0 == false`, `"" == false`, `null == undefined` will result `true`
+    * so always use triple equations `===` or `!==`
