@@ -15,3 +15,24 @@ form.addEventListener("submit", function (event) {
 
   alert("Login form submitted successfully.");
 });
+
+const sendButton = document.getElementById("send-button");
+const messageInput = document.getElementById("message-input");
+const messages = document.getElementById("messages");
+
+sendButton.addEventListener("click", function () {
+  const text = messageInput.value;
+
+  if (text === "") {
+    alert("Message cannot be empty.");
+    return;
+  }
+
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "message";
+  messageDiv.textContent = text;
+
+  messages.appendChild(messageDiv);
+
+  messageInput.value = "";
+});

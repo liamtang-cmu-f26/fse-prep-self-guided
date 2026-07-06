@@ -432,3 +432,117 @@ Add following line into html file right before `</body>`:
     * `5 === "5"` results `false`, `5 == "5"` results `true`.
     * `0 == false`, `"" == false`, `null == undefined` will result `true`
     * so always use triple equations `===` or `!==`
+
+---
+
+## DOM Manipulations
+
+### Concepts
+The Document Object Model is the browser’s object representation of HTML. The "document" is the HTML page.
+- suppose the HTML is:
+```html
+<body>
+<div>
+<h1>Hello</h1>
+<input id="username">
+<button>Login</button>
+</div>
+</body>
+```
+- The browser turns it into a DOM tree:
+```plaintext
+Document
+│
+└── html
+     │
+     └── body
+           │
+           └── div
+                 │
+                 ├── h1
+                 │
+                 ├── input
+                 │
+                 └── button
+```
+
+* select elements:
+```js
+document.getElementById("username");
+document.querySelector(".message");
+```
+* creat elements:
+```js
+const div = document.createElement("div");
+div.textContent = "Hello";
+```
+* Listen for events:
+```js
+button.addEventListener("click", function () {
+  console.log("Clicked");
+});
+```
+
+DOM changes the element as in a object, not modifying the HTML file.
+
+--- 
+
+### Example
+```html
+<div id="chat-container">
+  <h2>Chat</h2>
+
+  <div id="messages"></div>
+
+  <input id="message-input" type="text" placeholder="Type a message" />
+  <button id="send-button" type="button">Send</button>
+</div>
+```
+
+```css
+#chat-container {
+  margin-top: 24px;
+}
+
+#messages {
+  min-height: 120px;
+  border: 1px solid #ddd;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+}
+
+.message {
+  padding: 8px;
+  margin-bottom: 8px;
+  background-color: #e5e7eb;
+  border-radius: 6px;
+}
+```
+
+```js
+const sendButton = document.getElementById("send-button");
+const messageInput = document.getElementById("message-input");
+const messages = document.getElementById("messages");
+
+sendButton.addEventListener("click", function () {
+  const text = messageInput.value;
+
+  if (text === "") {
+    alert("Message cannot be empty.");
+    return;
+  }
+
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "message";
+  messageDiv.textContent = text;
+
+  messages.appendChild(messageDiv);
+
+  messageInput.value = "";
+});
+```
+
+---
+### Example notes
+HTML provides the initial skeleton. The browser builds a DOM from that HTML. JavaScript modifies the DOM (which exists in memory), and the browser updates the screen to reflect those changes. Unless JavaScript saves the data somewhere persistent (such as a database or browser storage), those DOM changes are lost when the page is reloaded.

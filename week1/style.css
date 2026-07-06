@@ -39,3 +39,22 @@ button {
   border: none;
   border-radius: 6px;
 }
+
+#chat-container {
+  margin-top: 24px;
+}
+
+#messages {
+  min-height: 120px;
+  border: 1px solid #ddd;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+}
+
+.message {
+  padding: 8px;
+  margin-bottom: 8px;
+  background-color: #e5e7eb;
+  border-radius: 6px;
+}
