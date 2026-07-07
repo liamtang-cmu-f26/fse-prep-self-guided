@@ -79,3 +79,73 @@
     ```
 
 ---
+
+## Express basics
+
+### route structure
+```js
+app.METHOD(PATH, HANDLER)
+```
+
+### example
+update `server.js`:
+```js
+const express = require("express");
+
+const app = express();
+const PORT = 3000;
+
+app.use(express.json());
+
+app.get("/", function (req, res) {
+  res.send("Hello from backend");
+});
+
+app.get("/api/health", function (req, res) {
+  res.json({
+    status: "ok",
+    message: "Backend is running"
+  });
+});
+
+app.get("/api/users", function (req, res) {
+  res.json([
+    { id: 1, username: "liam" },
+    { id: 2, username: "cmusv" }
+  ]);
+});
+
+app.listen(PORT, function () {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+```
+
+* Express decides which function should handle each request.
+    ```plaintext
+    Browser
+        │
+        │ Request
+        ▼
+    +----------------------+
+    | Express Server       |
+    |                      |
+    | "/"              → Room A
+    | "/api/health"    → Room B
+    | "/api/users"     → Room C
+    +----------------------+
+    ```
+* `app.use(express.json())` was not applied last time since the browser wasn;t sending any data to the server.
+* suppose frontend sends
+    ```json
+    {
+    "username": "liam",
+    "password": "123456"
+    }
+    ```
+    when Express received it, it initially just sees text:
+    ```plaintext
+    "{\"username\":\"liam\",\"password\":\"123456\"}"
+    ```
+    * `express.json()` tells Express whenever someone sends JSON, automatically parse it into a JavaScript object.
+* `res.send()` sends whatever you give it.
+* `res.json()` sends JSON.
