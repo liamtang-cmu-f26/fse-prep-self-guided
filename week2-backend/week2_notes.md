@@ -223,4 +223,308 @@ app.listen(PORT, function () {
     - 403 Forbidden: You are logged in, but you don't have permission.
     - 404 Not Found: Page doesn't exist.
     - 500 Internal Server Error: Something went wrong inside the server.
-    
+
+---
+
+## Checkpoint: idea of frontend and backend
+
+### Big Picture
+
+A modern web application consists of **two separate programs**:
+
+```text
+Browser (Frontend)
+        │
+        │ HTTP Request / Response
+        ▼
+Server (Backend)
+        │
+        ▼
+Database (later)
+```
+
+Although both can be written in JavaScript, **they run in different places and have different responsibilities.**
+
+### Frontend
+
+The frontend runs **inside the user's browser**.
+
+Technologies:
+
+- HTML
+- CSS
+- JavaScript
+
+Responsibilities:
+
+- Display the webpage
+- Respond to user interactions
+- Modify the DOM
+- Send requests to the backend
+- Perform simple validation for a better user experience
+
+Think of it as:
+
+```text
+HTML = Skeleton
+
+CSS = Skin / Clothes
+
+JavaScript = Muscles + Brain (behavior)
+```
+
+Example:
+
+```text
+User clicks Login
+
+↓
+
+Frontend JS checks:
+
+Is username empty?
+
+↓
+
+If empty
+
+↓
+
+Show alert immediately
+```
+
+This improves user experience because the user receives instant feedback without contacting the server.
+
+### Backend
+
+The backend runs on **your server** (currently your own computer using Node.js).
+
+Technologies:
+
+- Node.js
+- Express
+- MongoDB (later)
+- Mongoose (later)
+
+Responsibilities:
+
+- Receive HTTP requests
+- Validate incoming data
+- Execute business logic
+- Communicate with databases
+- Return HTTP responses
+
+Example:
+
+```text
+POST /api/register
+
+↓
+
+Backend receives:
+
+{
+    username,
+    password
+}
+
+↓
+
+Validate data
+
+↓
+
+Store user (later)
+
+↓
+
+Return response
+```
+
+### Why Have Both Frontend and Backend?
+
+The biggest reason is:
+
+> **The frontend belongs to the user. The backend belongs to you (the application/company).**
+
+```text
+User's Computer
+
+↓
+
+Frontend
+
+↓
+
+User can inspect or modify it.
+```
+
+```text
+Company Server
+
+↓
+
+Backend
+
+↓
+
+Users cannot directly control it.
+```
+
+Because users control the frontend, **it cannot be trusted**.
+
+### Never Trust the Frontend
+
+Suppose the frontend checks:
+
+```javascript
+if (username === "" || password === "") {
+    alert("Username and password cannot be empty.");
+    return;
+}
+```
+
+A normal user:
+
+```text
+User
+
+↓
+
+Frontend validation
+
+↓
+
+Backend
+```
+
+A malicious user can completely skip the frontend:
+
+```text
+User
+
+↓
+
+curl / Postman / Custom Program
+
+↓
+
+Backend
+```
+
+The backend must **always validate again**.
+
+Frontend validation is for **user experience**.
+
+Backend validation is for **security and correctness**.
+
+### The Backend Owns the Truth
+
+This is one of the most important concepts in web development.
+
+> **The backend owns the truth.**
+
+The frontend only displays it.
+
+Examples:
+
+| Data | Who Owns It? |
+|-------|--------------|
+| Login page layout | Frontend |
+| Button animations | Frontend |
+| Username empty check | Frontend + Backend |
+| Password database | Backend |
+| User accounts | Backend |
+| Shopping cart animation | Frontend |
+| Final product price | Backend |
+| Bank account balance | Backend |
+
+### Why Not Put Everything in the Frontend?
+
+Without a backend:
+
+- No database
+- No user accounts
+- No saved information
+- No shared data between users
+- No security
+- No authentication
+
+You could only build static or local applications.
+
+You could **not** build:
+
+- Gmail
+- Instagram
+- GitHub
+- WhatsApp
+- ChatGPT
+
+### Example: Login Flow
+
+```text
+User enters username/password
+
+↓
+
+Frontend JavaScript
+
+↓
+
+Basic validation
+(empty fields?)
+
+↓
+
+POST /login
+
+↓
+
+Backend
+
+↓
+
+Database
+
+↓
+
+Password correct?
+
+↓
+
+Return success or failure
+
+↓
+
+Frontend updates the page
+```
+
+Notice:
+
+- The frontend **does not know** whether the password is correct.
+- Only the backend has access to the database.
+
+### Mental Model
+
+Instead of memorizing "Frontend vs Backend", ask yourself:
+
+> **Who should own this information?**
+
+If it is:
+
+- UI appearance → Frontend
+- User interactions → Frontend
+- Sensitive information → Backend
+- Business rules → Backend
+- Database → Backend
+
+This question helps determine where a feature belongs.
+
+### Key Takeaways
+
+- **Frontend** runs in the browser and focuses on presentation and interaction.
+- **Backend** runs on the server and handles data, security, and business logic.
+- **Frontend validation improves user experience.**
+- **Backend validation guarantees correctness and security.**
+- **The backend is the source of truth.**
+- **The frontend should never be trusted with sensitive or authoritative data.**
