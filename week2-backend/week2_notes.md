@@ -149,3 +149,78 @@ app.listen(PORT, function () {
     * `express.json()` tells Express whenever someone sends JSON, automatically parse it into a JavaScript object.
 * `res.send()` sends whatever you give it.
 * `res.json()` sends JSON.
+
+---
+
+## Express Practice
+
+### Server Static Frontend Files
+- Create public:
+    ```bash
+    mkdir public
+    ```
+- Move week1 files to public:
+    ```plaintext
+    public/index.html
+    public/style.css
+    public/script.js
+    ```
+- add following to `server.js`:
+    ```js
+    app.use(express.static("public"));
+    ```
+- Now visit `http://localhost:3000` will show the HTML page.
+
+### Notes
+- `app.use(express.static("public"));` tells Express: When someone visits /, look inside the public folder. 
+    - So `http://localhost:3000`now returns `public/index.html`,
+    - instead of reaching `app.get("/", ...)`. The `app.get("/", ...)` is still there, but the static middleware handles the request first.
+
+---
+
+### Add POST requests
+- add route:
+    ```js
+    app.post("/api/register", function (req, res) {
+        const username = req.body.username;
+        const password = req.body.password;
+
+        if (!username || !password) {
+            return res.status(400).json({
+            error: "Username and password are required"
+            });
+        }
+
+        res.status(201).json({
+            message: "User received",
+            user: {
+            username: username
+            }
+        });
+    });
+    ```
+- key idea: `app.use(express.json());` allows Express to read JSON request bodies as `req.body`.
+- test with curl in a new terminal while `localhost` is running:
+    ```bash
+    curl -X POST http://localhost:3000/api/register \
+    -H "Content-Type: application/json" \
+    -d '{"username":"liam","password":"123456"}'
+    ```
+
+### Notes
+- `res.status(400)` sets the HTTP status code, meaning: bad request, the client sent invalid data.
+- `return` only after `res.status(400)`, because for the error case, you want to stop the function immediately.
+- for the success case, it is the last line nayway, so `return` is optional.
+- `curl` is a terminal tool for sending HTTP requests. It allows to test backend without building a frontend first. The server must be running.
+    - `-X POST`: use the POST method.
+    - `-H "Content-Type: application/json"`: send a header saying the request body is JSON.
+    - `-d '{"username":"liam","password":"123456"}'`: send this JSON data as the request body.
+- HTTP status codes:
+    - 200 OK: everything worked.
+    - 201 Created: A new resource was successfully created.
+    - 400 Bad Request: The client sent invalid data.
+    - 401 Unauthorized: You are not logged in.
+    - 403 Forbidden: You are logged in, but you don't have permission.
+    - 404 Not Found: Page doesn't exist.
+    - 500 Internal Server Error: Something went wrong inside the server.
+    
