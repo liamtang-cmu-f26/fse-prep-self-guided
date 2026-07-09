@@ -528,3 +528,54 @@ This question helps determine where a feature belongs.
 - **Backend validation guarantees correctness and security.**
 - **The backend is the source of truth.**
 - **The frontend should never be trusted with sensitive or authoritative data.**
+
+---
+
+## MongoDB
+
+### Setup
+- create `.env`:
+    ```env
+    MONGO_URI=your_mongodb_connection_string
+    PORT=3000
+    ```
+
+- update `server.js`:
+    ```js
+    require("dotenv").config();
+
+    const express = require("express");
+    const mongoose = require("mongoose");
+
+    const app = express();
+    const PORT = process.env.PORT || 3000;
+
+    app.use(express.json());
+    app.use(express.static("public"));
+
+    mongoose
+    .connect(process.env.MONGO_URI)
+    .then(function () {
+        console.log("Connected to MongoDB");
+    })
+    .catch(function (error) {
+        console.error("MongoDB connection error:", error);
+    });
+
+    app.get("/api/health", function (req, res) {
+    res.json({ status: "ok" });
+    });
+
+    app.listen(PORT, function () {
+    console.log(`Server running on http://localhost:${PORT}`);
+    });
+    ```
+
+### Notes
+- With `mongoose.connect(process.env.MONGO_URI);`, MongoDB does not connect instantly. 
+    - It needs to go through computer --> internet --> MOngoDB Atlas --> Authenticate --> Connect, which takes time. JavaScript cannot know beforehand.
+    - So `mongoose.connect(process.env.MONGO_URI);` doesn't return "Connected" immediately. Instead, it returns a **Promise**.
+- A **Promise** is JavaScript's way of saying "I'm working on it. I'll let you know when I'm finished."
+- `.then()` meaning "Then, if the connection succeeds..."
+- `.catch()` does the work for "if the connection goes wrong..."
+- `if...else...` is not applied here since the connection takes time to happen.

@@ -1,11 +1,22 @@
+require("dotenv").config();
+
 const express = require("express");
+const mongoose = require("mongoose");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-
 app.use(express.static("public"));
+
+mongoose
+    .connect(process.env.MONGO_URI)
+    .then(function () {
+        console.log("Connected to MongoDB");
+    })
+    .catch(function (error) {
+        console.error("MongoDB connection error:", error);
+    });
 
 app.post("/api/register", function (req, res) {
   const username = req.body.username;
