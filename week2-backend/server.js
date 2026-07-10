@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const User = require("./models/User");
 
 app.use(express.json());
 app.use(express.static("public"));
@@ -18,26 +19,42 @@ mongoose
         console.error("MongoDB connection error:", error);
     });
 
-app.post("/api/register", function (req, res) {
-  const username = req.body.username;
-  const password = req.body.password;
+app.post("/api/register", async function (req, res) {
+  try {
+    const username = req.body.username;
+    const password = req.body.password;
 
-  if (!username || !password) {
-    return res.status(400).json({
-      error: "Username and password are required"
+    if (!username || !password) {
+      return res.status(400).json({
+        error: "Username and password are required"
+      });
+    }
+
+    const existingUser = await User.findOne({ username: username });
+
+    if (existingUser) {
+      return res.status(409).json({
+        error: "Username already exists"
+      });
+    }
+
+    const user = await User.create({
+      username: username,
+      passwordHash: password
+    });
+
+    res.status(201).json({
+      message: "User created",
+      user: {
+        id: user._id,
+        username: user.username
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "Server error"
     });
   }
-
-  res.status(201).json({
-    message: "User received",
-    user: {
-      username: username
-    }
-  });
-});
-
-app.get("/", function (req, res) {
-  res.send("Hello from backend");
 });
 
 app.get("/api/health", function (req, res) {

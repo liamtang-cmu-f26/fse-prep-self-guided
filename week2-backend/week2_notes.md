@@ -579,3 +579,97 @@ This question helps determine where a feature belongs.
 - `.then()` meaning "Then, if the connection succeeds..."
 - `.catch()` does the work for "if the connection goes wrong..."
 - `if...else...` is not applied here since the connection takes time to happen.
+
+## Mongoose
+
+### Concepts
+- Mongoose helps define data structure. 
+- A **schema** defines the shape of a document; a **model** is the tool you use to create, find, update, and delete documents.
+
+### Setup
+- Create `models/User.js`:
+    ```js
+    const mongoose = require("mongoose");
+
+    const userSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    passwordHash: {
+        type: String,
+        required: true
+    }
+    });
+
+    const User = mongoose.model("User", userSchema);
+
+    module.exports = User;
+    ```
+
+- Update `server.js`:
+    ```js
+    const User = require("./models/User");
+    ```
+
+- Add register route:
+    ```js
+    app.post("/api/register", async function (req, res) {
+    try {
+        const username = req.body.username;
+        const password = req.body.password;
+
+        if (!username || !password) {
+        return res.status(400).json({
+            error: "Username and password are required"
+        });
+        }
+
+        const existingUser = await User.findOne({ username: username });
+
+        if (existingUser) {
+        return res.status(409).json({
+            error: "Username already exists"
+        });
+        }
+
+        const user = await User.create({
+        username: username,
+        passwordHash: password
+        });
+
+        res.status(201).json({
+        message: "User created",
+        user: {
+            id: user._id,
+            username: user.username
+        }
+        });
+    } catch (error) {
+        res.status(500).json({
+        error: "Server error"
+        });
+    }
+    });
+    ```
+
+### Notes
+- The schema defines the structure and validation rules. 
+    - username should be `string`, `required`, and `unique`.
+- The model is the interface your code uses to work with documents in MongoDB.
+    - User.create(...)
+    - User.findOne(...)
+    - User.find(...)
+    - User.findById(...)
+    - User.updateOne(...)
+    - User.deleteOne(...)
+- `module.exports = User;` means export the `User` value from this file. Then in `server.js` we use `const User = require("./models/User");` to retrieve and store.
+- to test if **registration** is working properly, open a second terminal and do:
+    ```bash
+    curl -i -X POST http://localhost:3000/api/register \
+    -H "Content-Type: application/json" \
+    -d '{"username":"liam","password":"123456"}'
+    ```
+- to test if **validation of same username** is working properly, re-prompt the same command above.
+- can NOT open a POST route in the browser.
