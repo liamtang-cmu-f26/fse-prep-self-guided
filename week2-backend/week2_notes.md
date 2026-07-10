@@ -753,3 +753,560 @@ This question helps determine where a feature belongs.
     - Then it combines them: `123456 + k93hF1` --> Hash. So another user who also choose `123456` could get a different salt, which allows different hashing.
     - cost factor controls how much work bcrypt should do. The larger the cost factor, the more computation it performs.
     - internally bcrypt users powers of two, each increase doubles the work. So very roughly, `bcrypt.hash(password, 11)` is approximately twice as slow as `bcrypt.hash(password, 10)`.
+
+---
+
+## JWT Authentication
+
+### Concepts
+- JWT means JSON Web Token. It is a compact way to send signed claims between two parties.
+- workflow:
+    ```plaintext
+    1. User logs in
+    2. Server verifies username/password
+    3. Server creates token
+    4. Client stores token
+    5. Client sends token when accessing protected routes
+    6. Server verifies token
+    ```
+
+### Setup
+- add secret to `.env`:
+    ```env
+    JWT_SECRET=your_long_random_secret
+    ```
+- add login Route in `server.js`:
+    ```js
+    const jwt = require("jsonwebtoken");
+
+    app.post("/api/login", async function (req, res) {
+    try {
+        const username = req.body.username;
+        const password = req.body.password;
+
+        if (!username || !password) {
+        return res.status(400).json({
+            error: "Username and password are required"
+        });
+        }
+
+        const user = await User.findOne({ username: username });
+
+        if (!user) {
+        return res.status(401).json({
+            error: "Invalid username or password"
+        });
+        }
+
+        const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+
+        if (!passwordMatches) {
+        return res.status(401).json({
+            error: "Invalid username or password"
+        });
+        }
+
+        const token = jwt.sign(
+        {
+            userId: user._id,
+            username: user.username
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: "1h"
+        }
+        );
+
+        res.json({
+        message: "Login successful",
+        token: token
+        });
+    } catch (error) {
+        res.status(500).json({
+        error: "Server error"
+        });
+    }
+    });
+    ```
+
+- create Auth Middleware: `middleware/authMiddleware.js`
+    ```js
+    const jwt = require("jsonwebtoken");
+
+    function authMiddleware(req, res, next) {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        return res.status(401).json({
+        error: "Authorization header missing"
+        });
+    }
+
+    const parts = authHeader.split(" ");
+
+    if (parts.length !== 2 || parts[0] !== "Bearer") {
+        return res.status(401).json({
+        error: "Invalid authorization format"
+        });
+    }
+
+    const token = parts[1];
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        req.user = decoded;
+
+        next();
+    } catch (error) {
+        return res.status(401).json({
+        error: "Invalid or expired token"
+        });
+    }
+    }
+
+    module.exports = authMiddleware;
+    ```
+
+- protect `/api/chat`, update `server.js`:
+    ```js
+    const authMiddleware = require("./middleware/authMiddleware");
+
+    app.get("/api/chat", authMiddleware, function (req, res) {
+    res.json({
+        message: "Welcome to protected chat",
+        user: req.user
+    });
+    });
+    ```
+
+### Notes
+
+#### Why Do We Need JWT?
+
+Suppose a user logs into a website.
+
+Without JWT:
+
+```text
+Request 1:
+Username + Password
+↓
+Server verifies
+
+Request 2:
+Username + Password
+↓
+Server verifies
+
+Request 3:
+Username + Password
+↓
+...
+```
+The user would have to send their password with **every request**, which is insecure.
+
+Instead:
+```text
+1. User logs in
+↓
+2. Server verifies username/password
+↓
+3. Server creates JWT
+↓
+4. Browser stores JWT
+↓
+5. Browser sends JWT when accessing protected routes
+↓
+6. Server verifies JWT
+↓
+7. Access granted
+```
+
+The password is only used during login.
+
+---
+
+#### What Is a JWT?
+
+JWT stands for **JSON Web Token**.
+
+A JWT is composed of three parts:
+
+```text
+Header.Payload.Signature
+```
+
+Example:
+
+```text
+xxxxx.yyyyy.zzzzz
+```
+
+- **Header** – algorithm information
+- **Payload** – data (claims)
+- **Signature** – proves the token has not been modified
+
+#### Payload vs Signature
+
+Example payload:
+
+```json
+{
+    "userId": "...",
+    "username": "liam"
+}
+```
+
+The payload is **not secret**.
+
+The important part is the **signature**.
+
+The signature is generated using:
+
+```text
+Payload
++
+JWT_SECRET
+↓
+Signature
+```
+
+If someone changes the payload:
+```json
+{
+    "username": "admin"
+}
+```
+
+the signature no longer matches.
+
+The server immediately detects that the token has been tampered with.
+
+#### Why Is the Signature Important?
+
+Think of a passport.
+
+The passport contains:
+
+- Name
+- Birthday
+- Photo
+
+Anyone can read these.
+
+What makes it trustworthy is the **government stamp/signature**.
+
+JWT works the same way.
+
+The server trusts the token because it can verify the signature.
+
+#### JWT_SECRET
+
+`JWT_SECRET` is a secret key known **only by the backend**.
+
+It is used when creating and verifying JWTs.
+
+Example:
+
+```env
+JWT_SECRET=7f94d8c3bbef0d6a8b78a8bc93d9f20e7d7a6dceab23b7c4b77c4efaa5df4f11
+```
+
+Never use weak secrets such as:
+
+```text
+secret
+123456
+password
+```
+
+Never upload `.env` to GitHub.
+
+#### How to Generate JWT_SECRET
+
+Do **not** manually invent one.
+
+Generate a cryptographically random string.
+
+Recommended:
+
+```bash
+openssl rand -hex 32
+```
+
+Example output:
+
+```text
+7f94d8c3bbef0d6a8b78a8bc93d9f20e7d7a6dceab23b7c4b77c4efaa5df4f11
+```
+
+This should be stored in:
+
+```env
+JWT_SECRET=<generated_secret>
+```
+
+#### What Happens If JWT_SECRET Changes?
+
+Suppose the server originally used:
+
+```text
+JWT_SECRET = ABC123
+```
+
+All issued JWTs were signed using this secret.
+
+Later, the secret changes:
+
+```text
+JWT_SECRET = XYZ789
+```
+
+Now every old JWT fails verification.
+
+Result:
+
+- All users are logged out.
+- Users must log in again.
+- New JWTs are signed using the new secret.
+
+#### Login Route
+
+Login workflow:
+
+```text
+Browser
+↓
+POST /api/login
+↓
+Find user in MongoDB
+↓
+bcrypt.compare()
+↓
+Password correct?
+↓
+Generate JWT
+↓
+Return JWT to browser
+```
+
+JWT creation:
+
+```javascript
+const token = jwt.sign(
+  {
+    userId: user._id,
+    username: user.username
+  },
+  process.env.JWT_SECRET,
+  {
+    expiresIn: "1h"
+  }
+);
+```
+
+Meaning:
+
+- Payload = user information
+- Secret = JWT_SECRET
+- Option = token expires in 1 hour
+
+#### Why Does JWT Expire?
+
+Suppose someone's JWT is stolen.
+If it never expired:
+```text
+Attacker
+↓
+Use token forever
+```
+
+Bad. Instead:
+```text
+Token
+↓
+Valid for 1 hour
+↓
+Expired
+↓
+Must log in again
+```
+
+Expired tokens are rejected with:
+```http
+401 Unauthorized
+```
+
+#### Protected Routes
+
+Protected routes require the user to be authenticated.
+
+Examples:
+
+```text
+/api/chat
+/api/profile
+/api/orders
+/api/settings
+```
+
+Public routes:
+
+```text
+/api/login
+/api/register
+```
+
+#### Authentication Middleware
+
+Middleware is code that runs **before** a route handler.
+Without middleware:
+```text
+Request
+↓
+Route
+```
+
+With middleware:
+```text
+Request
+↓
+Authentication Check
+↓
+Route
+```
+
+If authentication fails:
+```text
+Request
+↓
+Authentication Check
+↓
+401 Unauthorized
+↓
+Stop
+```
+
+The route never executes.
+
+#### Authorization Header
+
+The browser sends the JWT inside an HTTP header.
+
+Example:
+
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+Express reads it using:
+
+```javascript
+const authHeader = req.headers.authorization;
+```
+
+Example value:
+
+```text
+Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+Split by spaces:
+
+```javascript
+const parts = authHeader.split(" ");
+```
+
+Result:
+```text
+parts[0]
+↓
+Bearer
+```
+
+```text
+parts[1]
+↓
+JWT Token
+```
+
+The middleware extracts the token:
+```javascript
+const token = parts[1];
+```
+Then verifies it:
+```javascript
+const decoded = jwt.verify(
+    token,
+    process.env.JWT_SECRET
+);
+```
+If verification succeeds:
+```javascript
+req.user = decoded;
+```
+Now every later route knows who the current user is.
+
+#### Complete Authentication Flow
+
+```text
+Register
+↓
+Hash password with bcrypt
+↓
+Store user in MongoDB
+↓
+Login
+↓
+Compare password using bcrypt.compare()
+↓
+Password correct?
+↓
+Generate JWT (signed with JWT_SECRET)
+↓
+Browser stores JWT
+↓
+Browser requests protected API
+↓
+Authorization: Bearer <JWT>
+↓
+Authentication Middleware
+↓
+jwt.verify()
+↓
+Valid?
+├── No → 401 Unauthorized
+└── Yes
+      ↓
+Protected route executes
+```
+
+#### Key Takeaways
+
+- JWT allows users to authenticate **without sending their password on every request**.
+- A JWT contains **Header + Payload + Signature**.
+- The **signature** prevents token tampering.
+- The backend alone knows `JWT_SECRET`.
+- `JWT_SECRET` should be generated randomly and stored in `.env`.
+- Protected routes require a valid JWT.
+- Middleware verifies the JWT before allowing access.
+- If the JWT expires or is modified, the server returns **401 Unauthorized**.
+- Changing `JWT_SECRET` invalidates all existing JWTs.
+
+### testing workflow:
+register:
+```bash
+curl -i -X POST http://localhost:3000/api/register \  -H "Content-Type: application/json" \  -d '{"username":"liam","password":"123456"}'
+```
+
+login:
+```bash
+curl -i -X POST http://localhost:3000/api/login \   -H "Content-Type: application/json" \  -d '{"username":"liam","password":"123456"}
+```
+where `GENERATED_TOKEN` is given as a string in the response.
+
+access chat:
+```bash
+curl http://localhost:3000/api/chat \  -H "Authorization: Bearer GENERATED_TOKEN"
+```
