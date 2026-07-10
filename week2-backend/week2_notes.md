@@ -673,3 +673,83 @@ This question helps determine where a feature belongs.
     ```
 - to test if **validation of same username** is working properly, re-prompt the same command above.
 - can NOT open a POST route in the browser.
+
+---
+
+## Password Hashing
+
+### storing passwords
+- Bad:
+    ```js
+    password: "123456"
+    ```
+
+- Good:
+    ```js
+    passwordHash: "$2b$10$..."
+    ```
+
+- `bcrypt` hashes passwords so the database stores the hash, not the original password.
+
+### Setup
+
+- update `server.js`:
+    ```js
+    const bcrypt = require("bcrypt");
+    ```
+
+- replace user creation logic, the full route be like:
+    ```js
+    app.post("/api/register", async function (req, res) {
+    try {
+        const username = req.body.username;
+        const password = req.body.password;
+
+        if (!username || !password) {
+        return res.status(400).json({
+            error: "Username and password are required"
+        });
+        }
+
+        if (password.length < 6) {
+        return res.status(400).json({
+            error: "Password must be at least 6 characters"
+        });
+        }
+
+        const existingUser = await User.findOne({ username: username });
+
+        if (existingUser) {
+        return res.status(409).json({
+            error: "Username already exists"
+        });
+        }
+
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        const user = await User.create({
+        username: username,
+        passwordHash: passwordHash
+        });
+
+        res.status(201).json({
+        message: "User created",
+        user: {
+            id: user._id,
+            username: user.username
+        }
+        });
+    } catch (error) {
+        res.status(500).json({
+        error: "Server error"
+        });
+    }
+    });
+    ```
+
+### Notes
+- `bcrypt.hash(password, 10)`: the second parameter is called the **salt rounds**(or **cost factor**).
+    - `bcrypt` first generates a random salt, for example: `password = 123456`, `salt = k93hF1`.
+    - Then it combines them: `123456 + k93hF1` --> Hash. So another user who also choose `123456` could get a different salt, which allows different hashing.
+    - cost factor controls how much work bcrypt should do. The larger the cost factor, the more computation it performs.
+    - internally bcrypt users powers of two, each increase doubles the work. So very roughly, `bcrypt.hash(password, 11)` is approximately twice as slow as `bcrypt.hash(password, 10)`.

@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +30,12 @@ app.post("/api/register", async function (req, res) {
         error: "Username and password are required"
       });
     }
+    
+    if (password.length < 6) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters"
+      });
+    }
 
     const existingUser = await User.findOne({ username: username });
 
@@ -38,9 +45,11 @@ app.post("/api/register", async function (req, res) {
       });
     }
 
+    const passwordHash = await bcrypt.hash(password, 10);
+
     const user = await User.create({
-      username: username,
-      passwordHash: password
+    username: username,
+    passwordHash: passwordHash
     });
 
     res.status(201).json({
